@@ -1,5 +1,5 @@
 import { useState } from "react";
-
+ 
 const COLORS = {
   bg: "#F7F3ED",
   paper: "#FFFDF9",
@@ -11,14 +11,14 @@ const COLORS = {
   greenLight: "#E4F0E8",
   border: "#E2DDD6",
 };
-
+ 
 const ingredientSuggestions = [
   "eggs", "chicken breast", "ground beef", "pasta", "rice", "potatoes",
   "onion", "garlic", "tomatoes", "spinach", "broccoli", "carrots",
   "cheese", "milk", "butter", "olive oil", "beans", "lentils",
   "bread", "flour", "canned tomatoes", "soy sauce", "lemons",
 ];
-
+ 
 export default function App() {
   const [ingredients, setIngredients] = useState([]);
   const [inputValue, setInputValue] = useState("");
@@ -28,7 +28,7 @@ export default function App() {
   const [error, setError] = useState(null);
   const [expandedMeal, setExpandedMeal] = useState(null);
   const [dietPref, setDietPref] = useState("none");
-
+ 
   const handleInputChange = (e) => {
     const val = e.target.value;
     setInputValue(val);
@@ -41,7 +41,7 @@ export default function App() {
       setSuggestions([]);
     }
   };
-
+ 
   const addIngredient = (item) => {
     const trimmed = item.trim().toLowerCase();
     if (trimmed && !ingredients.includes(trimmed)) {
@@ -50,29 +50,29 @@ export default function App() {
     setInputValue("");
     setSuggestions([]);
   };
-
+ 
   const handleKeyDown = (e) => {
     if ((e.key === "Enter" || e.key === ",") && inputValue.trim()) {
       e.preventDefault();
       addIngredient(inputValue);
     }
   };
-
+ 
   const removeIngredient = (item) => {
     setIngredients(ingredients.filter((i) => i !== item));
   };
-
+ 
   const generateMeals = async () => {
     if (ingredients.length < 2) return;
     setLoading(true);
     setMeals(null);
     setError(null);
     setExpandedMeal(null);
-
+ 
     const dietNote = dietPref !== "none" ? `The user prefers ${dietPref} meals.` : "";
-
+ 
     const prompt = `You are a creative home cook assistant. The user has these leftover ingredients: ${ingredients.join(", ")}. ${dietNote}
-
+ 
 Generate exactly 3 meal ideas they can make. Respond ONLY with valid JSON (no markdown, no backticks), in this format:
 {
   "meals": [
@@ -88,11 +88,16 @@ Generate exactly 3 meal ideas they can make. Respond ONLY with valid JSON (no ma
     }
   ]
 }`;
-
+ 
     try {
       const response = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": import.meta.env.VITE_ANTHROPIC_API_KEY,
+          "anthropic-version": "2023-06-01",
+          "anthropic-dangerous-direct-browser-access": "true",
+        },
         body: JSON.stringify({
           model: "claude-sonnet-4-20250514",
           max_tokens: 1000,
@@ -110,10 +115,10 @@ Generate exactly 3 meal ideas they can make. Respond ONLY with valid JSON (no ma
       setLoading(false);
     }
   };
-
+ 
   const difficultyColor = (d) =>
     d === "Easy" ? COLORS.green : d === "Medium" ? COLORS.accent : "#8B2FC9";
-
+ 
   return (
     <div style={{ minHeight: "100vh", background: COLORS.bg, fontFamily: "'Georgia', serif" }}>
       {/* Header */}
@@ -136,9 +141,9 @@ Generate exactly 3 meal ideas they can make. Respond ONLY with valid JSON (no ma
           </div>
         </div>
       </div>
-
+ 
       <div style={{ maxWidth: 720, margin: "0 auto", padding: "32px 20px" }}>
-
+ 
         {/* Ingredient Input */}
         <div style={{
           background: COLORS.paper,
@@ -151,8 +156,7 @@ Generate exactly 3 meal ideas they can make. Respond ONLY with valid JSON (no ma
           <label style={{ fontSize: 13, fontWeight: "bold", color: COLORS.muted, textTransform: "uppercase", letterSpacing: 1 }}>
             What's in your fridge?
           </label>
-
-          {/* Tags */}
+ 
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 12, minHeight: 36 }}>
             {ingredients.map((item) => (
               <span key={item} style={{
@@ -174,8 +178,7 @@ Generate exactly 3 meal ideas they can make. Respond ONLY with valid JSON (no ma
               </span>
             ))}
           </div>
-
-          {/* Input */}
+ 
           <div style={{ position: "relative", marginTop: 12 }}>
             <input
               value={inputValue}
@@ -216,11 +219,7 @@ Generate exactly 3 meal ideas they can make. Respond ONLY with valid JSON (no ma
                     fontSize: 14,
                     color: COLORS.ink,
                     borderBottom: `1px solid ${COLORS.border}`,
-                    transition: "background 0.15s",
-                  }}
-                    onMouseEnter={e => e.target.style.background = COLORS.accentLight}
-                    onMouseLeave={e => e.target.style.background = "transparent"}
-                  >
+                  }}>
                     + {s}
                   </div>
                 ))}
@@ -231,7 +230,7 @@ Generate exactly 3 meal ideas they can make. Respond ONLY with valid JSON (no ma
             Press Enter or comma to add · {ingredients.length} ingredient{ingredients.length !== 1 ? "s" : ""} added
           </div>
         </div>
-
+ 
         {/* Diet Preference */}
         <div style={{
           background: COLORS.paper,
@@ -256,14 +255,13 @@ Generate exactly 3 meal ideas they can make. Respond ONLY with valid JSON (no ma
                 fontSize: 13,
                 fontFamily: "sans-serif",
                 fontWeight: dietPref === opt ? "bold" : "normal",
-                transition: "all 0.15s",
               }}>
                 {opt === "none" ? "No preference" : opt.charAt(0).toUpperCase() + opt.slice(1)}
               </button>
             ))}
           </div>
         </div>
-
+ 
         {/* Generate Button */}
         <button
           onClick={generateMeals}
@@ -279,22 +277,20 @@ Generate exactly 3 meal ideas they can make. Respond ONLY with valid JSON (no ma
             fontWeight: "bold",
             cursor: ingredients.length < 2 || loading ? "not-allowed" : "pointer",
             fontFamily: "sans-serif",
-            letterSpacing: "0.3px",
-            transition: "all 0.2s",
             marginBottom: 28,
           }}
         >
           {loading ? "🍳 Finding meals..." : ingredients.length < 2 ? "Add at least 2 ingredients" : "✨ Generate Meal Ideas"}
         </button>
-
+ 
         {/* Error */}
         {error && (
           <div style={{ background: "#FEE2E2", color: "#B91C1C", padding: 14, borderRadius: 8, marginBottom: 20, fontFamily: "sans-serif", fontSize: 14 }}>
             {error}
           </div>
         )}
-
-        {/* Loading Skeleton */}
+ 
+        {/* Loading */}
         {loading && (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {[1, 2, 3].map((i) => (
@@ -303,13 +299,12 @@ Generate exactly 3 meal ideas they can make. Respond ONLY with valid JSON (no ma
                 background: COLORS.paper,
                 borderRadius: 12,
                 border: `1px solid ${COLORS.border}`,
-                animation: "pulse 1.5s ease-in-out infinite",
+                opacity: 0.6,
               }} />
             ))}
-            <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }`}</style>
           </div>
         )}
-
+ 
         {/* Meal Results */}
         {meals && (
           <div>
@@ -324,9 +319,7 @@ Generate exactly 3 meal ideas they can make. Respond ONLY with valid JSON (no ma
                   borderRadius: 12,
                   overflow: "hidden",
                   boxShadow: expandedMeal === idx ? `0 4px 20px rgba(212,96,26,0.12)` : "0 2px 8px rgba(0,0,0,0.04)",
-                  transition: "all 0.2s",
                 }}>
-                  {/* Meal Header */}
                   <div
                     onClick={() => setExpandedMeal(expandedMeal === idx ? null : idx)}
                     style={{ padding: "18px 20px", cursor: "pointer", display: "flex", alignItems: "center", gap: 14 }}
@@ -349,12 +342,10 @@ Generate exactly 3 meal ideas they can make. Respond ONLY with valid JSON (no ma
                       {expandedMeal === idx ? "▲" : "▼"}
                     </span>
                   </div>
-
-                  {/* Expanded Content */}
+ 
                   {expandedMeal === idx && (
                     <div style={{ padding: "0 20px 20px", borderTop: `1px solid ${COLORS.border}` }}>
                       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginTop: 16 }}>
-                        {/* Ingredients used */}
                         <div style={{ background: COLORS.greenLight, borderRadius: 8, padding: 14 }}>
                           <div style={{ fontSize: 12, fontWeight: "bold", color: COLORS.green, textTransform: "uppercase", letterSpacing: 1, fontFamily: "sans-serif", marginBottom: 8 }}>
                             ✓ You have
@@ -363,7 +354,6 @@ Generate exactly 3 meal ideas they can make. Respond ONLY with valid JSON (no ma
                             <div key={ing} style={{ fontSize: 14, color: COLORS.ink, fontFamily: "sans-serif", marginBottom: 4 }}>• {ing}</div>
                           ))}
                         </div>
-                        {/* Missing */}
                         <div style={{ background: meal.missing?.length ? COLORS.accentLight : COLORS.greenLight, borderRadius: 8, padding: 14 }}>
                           <div style={{ fontSize: 12, fontWeight: "bold", color: meal.missing?.length ? COLORS.accent : COLORS.green, textTransform: "uppercase", letterSpacing: 1, fontFamily: "sans-serif", marginBottom: 8 }}>
                             {meal.missing?.length ? "🛒 Might need" : "🎉 No extras needed"}
@@ -375,8 +365,7 @@ Generate exactly 3 meal ideas they can make. Respond ONLY with valid JSON (no ma
                           )}
                         </div>
                       </div>
-
-                      {/* Steps */}
+ 
                       <div style={{ marginTop: 16 }}>
                         <div style={{ fontSize: 12, fontWeight: "bold", color: COLORS.muted, textTransform: "uppercase", letterSpacing: 1, fontFamily: "sans-serif", marginBottom: 10 }}>
                           How to make it
